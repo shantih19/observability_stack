@@ -1,0 +1,11 @@
+[Unit]
+Description=Prometheus node_exporter
+
+[Service]
+Type=simple
+Restart=on-failure
+User=node_exporter
+ExecStart=/home/node_exporter/node_exporter --web.listen-address=127.0.0.1:9009
+
+[Install]
+WantedBy=multi-user.target
