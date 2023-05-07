@@ -1,0 +1,58 @@
+version: '3'
+services:
+  statsd-exporter:
+    restart: unless-stopped
+    image: prom/statsd-exporter
+    networks:
+      - mastodon_external_network
+      - monitoring
+    volumes:
+      - ./statsd-mapping.yaml:/etc/statsd-mapping.yaml
+    command: --statsd.mapping-config=/etc/statsd-mapping.yaml
+
+  postgres-exporter:
+    restart: unless-stopped
+    image: prometheuscommunity/postgres-exporter
+    env_file: .env.production
+    networks:
+      - mastodon_internal_network
+      - monitoring
+  
+  nginx-exporter:
+    restart: unless-stopped
+    image: nginx/nginx-prometheus-exporter
+    networks:
+      - monitoring
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: -nginx.scrape-uri=http://host.docker.internal/stub_status
+
+  prometheus:
+    restart: unless-stopped
+    image: prom/prometheus
+    networks:
+      - monitoring
+    volumes:
+      - prometheus:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  
+  grafana:
+    restart: unless-stopped
+    image: grafana/grafana-oss
+    networks:
+      - monitoring
+    ports:
+      - '3500:3000'
+    volumes:
+      - grafana:/var/lib/grafana
+
+networks:
+  monitoring:
+  mastodon_external_network:
+    external: true
+  mastodon_internal_network:
+    external: true
+
+volumes:
+  grafana:
+  prometheus:
